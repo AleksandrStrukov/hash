@@ -1,0 +1,57 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+struct Circle {
+    double x;
+    double y;
+    double r;
+};
+
+struct Dumbbell {
+    Circle circle1;
+    Circle circle2;
+    string text;
+};
+
+struct DumbbellHash {
+    size_t operator()(const Dumbbell& dumbbell) const {
+        // Выбираем простое число для степеней
+        const size_t prime = 31;
+        
+        // Хешируем string text
+        size_t text_hash = 0;
+        for (char c : dumbbell.text) {
+            text_hash = text_hash * prime + static_cast<size_t>(c);
+        }
+        
+        // Хешируем double через преобразование в биты
+        auto hash_double = [](double d) -> size_t {
+            union {
+                double d;
+                size_t bits;
+            } u;
+            u.d = d;
+            return u.bits;
+        };
+        
+        // Комбинируем хеши всех полей с разными степенями prime
+        size_t result = 0;
+        result = result * prime + hash_double(dumbbell.circle1.x);  // 1-я степень
+        result = result * prime + hash_double(dumbbell.circle1.y);  // 2-я степень
+        result = result * prime + hash_double(dumbbell.circle1.r);  // 3-я степень
+        result = result * prime + hash_double(dumbbell.circle2.x);  // 4-я степень
+        result = result * prime + hash_double(dumbbell.circle2.y);  // 5-я степень
+        result = result * prime + hash_double(dumbbell.circle2.r);  // 6-я степень
+        result = result * prime + text_hash;                        // 7-я степень
+        
+        return result;
+    }
+};
+
+int main() {
+    DumbbellHash hash;
+    Dumbbell dumbbell{{10, 11.5, 2.3}, {3.14, 15, -8}, "abc"s};
+    cout << "Dumbbell hash "s << hash(dumbbell);
+}
